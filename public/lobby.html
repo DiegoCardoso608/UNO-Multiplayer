@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>UNO — Lobby</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--red:#E8001C;--yellow:#FFD700;--green:#1DB954;--blue:#4F6EF7;--purple:#7C3AED}
+body{font-family:'Nunito',sans-serif;min-height:100vh;background:linear-gradient(135deg,#4F6EF7,#7C3AED);display:flex;flex-direction:column;overflow-x:hidden}
+
+.header{padding:13px 18px;display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.08);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,0.1);gap:10px}
+.header-logo{font-family:'Bebas Neue';font-size:30px;color:white;letter-spacing:2px;text-decoration:none;flex-shrink:0}
+.user-info{display:flex;align-items:center;gap:8px;color:white;font-weight:700;font-size:13px;min-width:0}
+.user-name-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px}
+.user-av{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.4);flex-shrink:0;background:linear-gradient(135deg,#ff7a00,#ffd700);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:white;overflow:hidden}
+.user-av img{width:100%;height:100%;object-fit:cover}
+.btn-logout{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;font-size:11px;font-weight:700;padding:4px 10px;border-radius:14px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+
+.main{flex:1;display:grid;grid-template-columns:1fr 380px 260px;gap:18px;padding:20px 18px;max-width:1360px;margin:0 auto;width:100%}
+@media(max-width:1100px){.main{grid-template-columns:1fr 360px}}
+@media(max-width:720px){.main{grid-template-columns:1fr;padding:14px 12px;gap:14px}}
+
+.panel{background:rgba(255,255,255,0.1);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.18);border-radius:18px;padding:20px;color:white}
+.panel-title{font-family:'Bebas Neue';font-size:22px;letter-spacing:1px;margin-bottom:14px}
+.room-list{display:flex;flex-direction:column;gap:8px}
+.room-card{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .2s,transform .2s}
+.room-card:hover,.room-card:active{background:rgba(255,255,255,0.22);transform:translateX(3px)}
+.room-info h3{font-size:14px;font-weight:900}
+.room-info p{font-size:11px;opacity:.7;margin-top:1px}
+.room-players{font-size:11px;font-weight:700;background:rgba(255,255,255,0.2);padding:4px 10px;border-radius:12px}
+.no-rooms{text-align:center;opacity:.6;padding:28px;font-size:13px;line-height:1.7}
+
+/* ── Lobby Card com Abas ── */
+.lobby-card{background:white;border-radius:18px;overflow:hidden;box-shadow:0 16px 50px rgba(0,0,0,0.2)}
+.tabs{display:flex;border-bottom:2px solid #f0f0f0}
+.tab{flex:1;padding:12px;font-family:'Bebas Neue';font-size:16px;letter-spacing:1px;color:#999;background:none;border:none;cursor:pointer;transition:color .2s,border-color .2s;border-bottom:3px solid transparent;margin-bottom:-2px}
+.tab.active{color:#1a1a2e;border-bottom-color:var(--blue)}
+.tab-content{display:none;padding:22px}
+.tab-content.active{display:block}
+
+.lobby-card-title{font-family:'Bebas Neue';font-size:26px;color:#1a1a2e;letter-spacing:1px;margin-bottom:5px}
+.divider{height:1px;background:#eee;margin:14px 0}
+
+.players-in-room{display:flex;flex-direction:column;gap:7px;margin-bottom:14px;max-height:240px;overflow-y:auto}
+.player-row{background:#f7f7f7;border-radius:11px;padding:9px 13px;display:flex;align-items:center;gap:9px;animation:slideIn .25s ease}
+@keyframes slideIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+.pl-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#ff7a00,#ffd700);display:flex;align-items:center;justify-content:center;font-weight:900;color:white;font-size:14px;flex-shrink:0;overflow:hidden}
+.pl-av img{width:100%;height:100%;object-fit:cover}
+.pl-name{flex:1;font-weight:700;font-size:13px;color:#1a1a2e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.host-badge{background:linear-gradient(135deg,#ffd700,#ff7a00);color:white;font-size:10px;font-weight:900;padding:2px 8px;border-radius:12px;white-space:nowrap}
+.waiting-slot{border:2px dashed #e0e0e0;border-radius:11px;padding:10px;text-align:center;color:#ccc;font-size:12px;font-weight:600}
+
+.input-group{margin-bottom:12px}
+.input-label{font-size:11px;font-weight:700;color:#888;margin-bottom:4px;display:block;text-transform:uppercase;letter-spacing:.5px}
+.input-field{width:100%;padding:10px 13px;border:2px solid #eee;border-radius:10px;font-family:'Nunito';font-size:14px;font-weight:600;color:#1a1a2e;outline:none;transition:border-color .2s}
+.input-field:focus{border-color:var(--blue)}
+
+.room-code-row{display:flex;gap:7px}
+.room-code-row .input-field{text-transform:uppercase;letter-spacing:4px;font-family:'Bebas Neue';font-size:20px}
+.btn-join-code{padding:0 16px;background:var(--blue);color:white;border:none;border-radius:10px;font-family:'Nunito';font-size:13px;font-weight:900;cursor:pointer;white-space:nowrap;transition:background .2s}
+.btn-join-code:hover{background:#3a5ae8}
+
+.action-buttons{display:flex;flex-direction:column;gap:9px;margin-top:14px}
+.btn{width:100%;padding:13px;border:none;border-radius:12px;font-family:'Nunito';font-size:15px;font-weight:900;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.15)}
+.btn:active{transform:translateY(0)}
+.btn-primary{background:linear-gradient(135deg,var(--red),#ff7a00);color:white}
+.btn-danger{background:#fee2e2;color:#dc2626}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+
+.code-display{background:linear-gradient(135deg,#1a1a2e,#2d2d5e);color:white;border-radius:13px;padding:13px;text-align:center;margin-bottom:13px}
+.code-display-label{font-size:10px;font-weight:700;opacity:.55;letter-spacing:2px;text-transform:uppercase;margin-bottom:3px}
+.code-display-value{font-family:'Bebas Neue';font-size:34px;letter-spacing:8px;color:var(--yellow)}
+
+/* ── Settings Tab ── */
+.settings-section{margin-bottom:20px}
+.settings-section-title{font-family:'Bebas Neue';font-size:16px;letter-spacing:1px;color:#1a1a2e;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #f0f0f0;display:flex;align-items:center;gap:6px}
+.settings-section-title .icon{font-size:14px}
+.settings-grid{display:flex;flex-direction:column;gap:8px}
+.setting-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;background:#f9f9f9;border-radius:11px;transition:background .2s}
+.setting-row:hover{background:#f0f4ff}
+.setting-info{flex:1;min-width:0}
+.setting-name{font-size:13px;font-weight:900;color:#1a1a2e}
+.setting-desc{font-size:11px;color:#888;margin-top:1px;line-height:1.4}
+.setting-badge{font-size:9px;font-weight:900;padding:2px 7px;border-radius:10px;background:#e8f4ff;color:var(--blue);white-space:nowrap;flex-shrink:0;margin-left:4px}
+
+/* Start Cards Selector */
+.start-cards-select{display:flex;gap:6px}
+.sc-btn{padding:6px 14px;border:2px solid #e0e0e0;border-radius:10px;font-family:'Nunito';font-size:14px;font-weight:900;color:#888;background:white;cursor:pointer;transition:all .2s}
+.sc-btn.active{border-color:var(--blue);color:var(--blue);background:#e8f4ff}
+.sc-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* Toggle switch */
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-slider{position:absolute;inset:0;background:#ddd;border-radius:24px;cursor:pointer;transition:background .25s}
+.toggle-slider::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:white;border-radius:50%;transition:transform .25s;box-shadow:0 1px 4px rgba(0,0,0,0.2)}
+.toggle input:checked+.toggle-slider{background:var(--blue)}
+.toggle input:checked+.toggle-slider::before{transform:translateX(20px)}
+.toggle input:disabled+.toggle-slider{opacity:.4;cursor:not-allowed}
+
+.settings-note{background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:10px 13px;font-size:11px;color:#8a6d00;font-weight:600;line-height:1.5;margin-bottom:14px}
+.settings-locked{opacity:.5;pointer-events:none}
+
+/* Histórico */
+.history-btn{position:fixed;bottom:18px;right:18px;background:rgba(255,255,255,0.15);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.25);color:white;font-family:'Nunito';font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;cursor:pointer;z-index:50;transition:background .2s}
+.history-btn:hover{background:rgba(255,255,255,0.25)}
+.history-modal{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center}
+.history-panel{background:white;border-radius:24px 24px 0 0;padding:24px;width:100%;max-width:500px;max-height:70vh;overflow-y:auto}
+.history-title{font-family:'Bebas Neue';font-size:24px;color:#1a1a2e;letter-spacing:1px;margin-bottom:16px}
+.match-row{background:#f7f7f7;border-radius:12px;padding:12px 16px;margin-bottom:8px}
+.match-row-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.match-winner{font-weight:900;font-size:14px;color:#1a1a2e}
+.match-date{font-size:11px;color:#999}
+.match-players{font-size:12px;color:#666}
+.history-close{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:#999;margin-top:-4px}
+.no-history{text-align:center;color:#bbb;padding:20px;font-size:14px}
+
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:white;padding:9px 20px;border-radius:22px;font-weight:700;font-size:12px;z-index:1000;animation:toIn .25s ease,toOut .25s 2.7s ease forwards;white-space:nowrap}
+@keyframes toIn{from{opacity:0;transform:translateX(-50%) translateY(12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes toOut{to{opacity:0}}
+#inRoomState{display:none}
+
+/* ── Painel de Background ── */
+.bg-panel{
+  background:rgba(255,255,255,0.1);backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,0.18);border-radius:18px;
+  padding:16px;color:white;display:flex;flex-direction:column;gap:10px;
+  overflow:hidden;
+}
+.bg-panel-title{font-family:'Bebas Neue';font-size:20px;letter-spacing:1px}
+.bg-panel-subtitle{font-size:11px;opacity:.6;font-weight:600;line-height:1.4;margin-top:-4px}
+/* lista scrollável ocupa o espaço disponível */
+.bg-list{
+  display:flex;flex-direction:column;gap:8px;
+  overflow-y:auto;flex:1;
+  max-height:calc(100vh - 320px);
+  padding-right:2px;
+}
+.bg-list::-webkit-scrollbar{width:4px}
+.bg-list::-webkit-scrollbar-track{background:rgba(255,255,255,.08);border-radius:4px}
+.bg-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.3);border-radius:4px}
+/* cada item: imagem full-width, 16:9, sem label */
+.bg-item{
+  position:relative;width:100%;aspect-ratio:16/9;
+  border-radius:10px;overflow:hidden;cursor:pointer;
+  border:3px solid transparent;
+  transition:border-color .18s,box-shadow .18s,transform .15s;
+  background:#1a1a2e;flex-shrink:0;
+}
+/* shimmer enquanto carrega */
+.bg-item::before{
+  content:'';position:absolute;inset:0;z-index:0;
+  background:linear-gradient(90deg,#1a1a2e 25%,#2d2d5e 50%,#1a1a2e 75%);
+  background-size:200% 100%;
+  animation:bgShimmer 1.4s ease infinite;
+}
+@keyframes bgShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.bg-item img,.bg-item video{
+  position:relative;z-index:1;
+  width:100%;height:100%;object-fit:cover;display:block;
+  transition:transform .22s;pointer-events:none;
+  background:#1a1a2e;
+}
+.bg-item:hover{transform:scale(1.02);box-shadow:0 6px 20px rgba(0,0,0,.55)}
+.bg-item:hover img,.bg-item:hover video{transform:scale(1.04)}
+/* selecionado pelo usuário localmente */
+.bg-item.my-sel{border-color:#FFD700;box-shadow:0 0 0 2px rgba(255,215,0,.35)}
+/* ativo na sala (host definiu) — borda verde + badge */
+.bg-item.room-active{border-color:#1DB954;box-shadow:0 0 0 2px rgba(29,185,84,.4)}
+/* padrão */
+.bg-item-default{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;background:linear-gradient(135deg,rgba(232,0,28,.25),rgba(255,122,0,.25));
+}
+.bg-item-default-icon{font-size:32px}
+.bg-item-default-lbl{font-family:'Bebas Neue';font-size:13px;letter-spacing:1px;opacity:.8}
+/* badge ativo (canto superior esquerdo) */
+.bg-active-badge{
+  position:absolute;top:6px;left:6px;
+  background:#1DB954;color:white;
+  font-size:10px;font-weight:900;padding:2px 8px;border-radius:8px;
+  display:flex;align-items:center;gap:3px;
+  box-shadow:0 2px 8px rgba(0,0,0,.4);
+}
+/* badge de votos (canto superior direito) */
+.bg-vote-badge{
+  position:absolute;top:6px;right:6px;
+  background:rgba(79,110,247,.92);color:white;
+  font-size:10px;font-weight:900;padding:2px 8px;border-radius:8px;
+  box-shadow:0 2px 8px rgba(0,0,0,.35);
+}
+/* barra de ações fixa no fundo */
+.bg-actions{display:flex;flex-direction:column;gap:7px;padding-top:4px;border-top:1px solid rgba(255,255,255,.12)}
+.bg-status{font-size:11px;opacity:.65;font-weight:600;text-align:center;min-height:14px}
+.btn-bg-apply{
+  padding:10px;background:linear-gradient(135deg,var(--red),#ff7a00);
+  color:white;border:none;border-radius:10px;
+  font-family:'Nunito';font-size:13px;font-weight:900;
+  cursor:pointer;transition:transform .15s,opacity .15s;
+}
+.btn-bg-apply:disabled{opacity:.35;cursor:not-allowed}
+.btn-bg-apply:not(:disabled):hover{transform:translateY(-1px)}
+.btn-bg-vote{
+  padding:10px;background:rgba(79,110,247,.85);
+  color:white;border:none;border-radius:10px;
+  font-family:'Nunito';font-size:13px;font-weight:900;
+  cursor:pointer;transition:transform .15s,opacity .15s;
+}
+.btn-bg-vote:disabled{opacity:.35;cursor:not-allowed}
+.btn-bg-vote:not(:disabled):hover{transform:translateY(-1px)}
+.bg-no-files{text-align:center;opacity:.5;font-size:12px;padding:14px 0;line-height:1.7}
+@media(max-width:1100px){.bg-panel{display:none}}
+@media(max-width:720px){.bg-panel{display:flex;max-height:none}.bg-list{max-height:380px}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <a href="/" class="header-logo">UNO</a>
+  <div class="user-info">
+    <div class="user-av" id="hAv">?</div>
+    <span class="user-name-text" id="hName">...</span>
+    <button class="btn-logout" onclick="logout()">Sair</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="panel">
+    <div class="panel-title">🌐 Salas Disponíveis</div>
+    <div class="room-list" id="roomList"><div class="no-rooms">Nenhuma sala aberta.<br>Crie uma para começar!</div></div>
+  </div>
+
+  <div class="lobby-card">
+    <!-- Abas -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('sala')">🎴 Sala</button>
+      <button class="tab" id="settingsTab" onclick="switchTab('settings')">⚙️ Regras da Sala</button>
+    </div>
+
+    <!-- Aba Sala -->
+    <div id="tabSala" class="tab-content active">
+      <div id="initialState">
+        <div class="lobby-card-title">Game Lobby</div>
+        <div class="divider"></div>
+        <div class="action-buttons">
+          <button class="btn btn-primary" onclick="createRoom()">+ Criar Nova Sala</button>
+          <div class="input-group" style="margin-bottom:0">
+            <label class="input-label">Entrar com código</label>
+            <div class="room-code-row">
+              <input class="input-field" type="text" id="joinCode" placeholder="XXXXXX" maxlength="6">
+              <button class="btn-join-code" onclick="joinByCode()">Entrar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="inRoomState">
+        <div class="code-display">
+          <div class="code-display-label">Código da Sala</div>
+          <div class="code-display-value" id="roomCodeValue">------</div>
+        </div>
+        <div class="lobby-card-title" style="font-size:19px">Jogadores</div>
+        <div style="color:#999;font-size:12px;font-weight:600;margin-bottom:10px" id="playerCountText"></div>
+        <div class="players-in-room" id="playersInRoom"></div>
+        <div class="action-buttons">
+          <button class="btn btn-primary" id="startBtn" onclick="startGame()" disabled>Iniciar Partida</button>
+          <button class="btn btn-danger" onclick="leaveRoom()">🚪 Sair da Sala</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aba Configurações / Regras -->
+    <div id="tabSettings" class="tab-content">
+      <div id="settingsLockNote" class="settings-note" style="display:none">
+        ⚠️ Só o <strong>host</strong> da sala pode alterar as regras. Entre em uma sala primeiro.
+      </div>
+      <div id="settingsGuestNote" class="settings-note" style="display:none">
+        ⚠️ Você precisa <strong>criar uma sala</strong> para ser host e configurar as regras.
+      </div>
+
+      <!-- Configurações básicas -->
+      <div class="settings-section">
+        <div class="settings-section-title"><span class="icon">🃏</span> Cartas Iniciais</div>
+        <div class="settings-grid">
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Cartas por jogador</div>
+              <div class="setting-desc">Padrão: 7 cartas. Ativar para começar com 9.</div>
+            </div>
+            <div class="start-cards-select">
+              <button class="sc-btn active" id="sc7" onclick="setStartCards(7)">7</button>
+              <button class="sc-btn" id="sc9" onclick="setStartCards(9)">9</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Regras de empilhamento -->
+      <div class="settings-section">
+        <div class="settings-section-title"><span class="icon">📚</span> Empilhamento</div>
+        <div class="settings-grid">
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Empilhar +2 <span class="setting-badge">+2→+2→+2</span></div>
+              <div class="setting-desc">Próximo jogador pode responder com outro +2, acumulando.</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="rStackDraw2" onchange="updateRule('stackDraw2', this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Empilhar +4 <span class="setting-badge">+4→+4</span></div>
+              <div class="setting-desc">Próximo jogador pode responder com outro +4.</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="rStackDraw4" onchange="updateRule('stackDraw4', this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Misturar +2/+4 <span class="setting-badge">+2+4 mix</span></div>
+              <div class="setting-desc">+2 pode responder a +4 e vice-versa (em ordem de grandeza).</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="rStackMix" onchange="updateRule('stackMix', this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Regras especiais de número -->
+      <div class="settings-section">
+        <div class="settings-section-title"><span class="icon">✨</span> Regras Especiais</div>
+        <div class="settings-grid">
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Regra do 7 <span class="setting-badge">troca de mão</span></div>
+              <div class="setting-desc">Quem joga um 7 escolhe com quem trocar de mão. Pode recusar.</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="rRule7" onchange="updateRule('rule7', this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Regra do 0 <span class="setting-badge">rotação</span></div>
+              <div class="setting-desc">Quem joga um 0 faz todos passarem suas mãos para o próximo.</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="rRule0" onchange="updateRule('rule0', this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Regra do 9 <span class="setting-badge">🤜 mesa</span></div>
+              <div class="setting-desc">Quem joga um 9 deve bater na mesa. Quem não bater leva +2.</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="rRule9" onchange="updateRule('rule9', this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Outros -->
+      <div class="settings-section">
+        <div class="settings-section-title"><span class="icon">🎮</span> Gameplay</div>
+        <div class="settings-grid">
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Comprar até jogar</div>
+              <div class="setting-desc">Continua comprando do baralho até tirar uma carta válida.</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="rDrawUntilPlay" onchange="updateRule('drawUntilPlay', this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Jogar múltiplas iguais</div>
+              <div class="setting-desc">Jogue dois ou mais números iguais de uma vez (cores diferentes ok).</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="rMultiPlay" onchange="updateRule('multiPlay', this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Restrição do +4 <span class="setting-badge">oficial</span></div>
+              <div class="setting-desc">Ative para aplicar a regra oficial: +4 só pode ser jogado se não tiver carta da cor atual na mão.</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="rWild4Restrict" onchange="updateRule('wild4NoRestriction', !this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Brilhar cartas jogáveis <span class="setting-badge">✨ visual</span></div>
+              <div class="setting-desc">Suas cartas que podem ser jogadas ficam com brilho dourado na sua vez.</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="rGlowCards" onchange="updateRule('glowCards', this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Tempo limite por turno <span class="setting-badge">⏱ 30s</span></div>
+              <div class="setting-desc">Cada jogador tem 30 segundos para jogar ou comprar. Quem não agir tem a vez passada.</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="rTurnTimer" onchange="updateRule('turnTimer', this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Painel de Background -->
+  <div class="bg-panel" id="bgPanel">
+    <div class="bg-panel-title">🖼️ Cenário do Jogo</div>
+    <div class="bg-panel-subtitle" id="bgPanelSubtitle">Host define ou todos votam. Sem votos → aleatório.</div>
+    <div class="bg-list" id="bgList">
+      <div class="bg-no-files">Buscando cenários...</div>
+    </div>
+    <div class="bg-actions">
+      <div class="bg-status" id="bgStatus"></div>
+      <button class="btn-bg-apply" id="btnBgApply" onclick="applyBackground()" disabled>✅ Definir para a sala</button>
+      <button class="btn-bg-vote" id="btnBgVote" onclick="voteBackground()" disabled>🗳️ Votar neste</button>
+    </div>
+  </div>
+</div>
+
+<button class="history-btn" onclick="openHistory()">📋 Histórico</button>
+<div class="history-modal" id="historyModal" style="display:none" onclick="if(event.target===this)closeHistory()">
+  <div class="history-panel">
+    <button class="history-close" onclick="closeHistory()">✕</button>
+    <div class="history-title">Histórico de Partidas</div>
+    <div id="historyList"><div class="no-history">Carregando...</div></div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+let currentUser = null, currentRoom = null, isHost = false, myPlayer = null;
+let roomRules = {
+  startCards: 7, stackDraw2: false, stackDraw4: false, stackMix: false,
+  rule7: false, rule0: false, rule9: false, drawUntilPlay: false, multiPlay: false,
+  wild4NoRestriction: true, glowCards: true, turnTimer: true
+};
+
+sessionStorage.clear();
+
+// ── Tab switching ──────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='sala')||(i===1&&tab==='settings')));
+  document.getElementById('tabSala').classList.toggle('active', tab==='sala');
+  document.getElementById('tabSettings').classList.toggle('active', tab==='settings');
+  if (tab === 'settings') updateSettingsUI();
+}
+
+function updateSettingsUI() {
+  const inRoom = !!currentRoom;
+  const hostControl = inRoom && isHost;
+  const lockNote = document.getElementById('settingsLockNote');
+  const guestNote = document.getElementById('settingsGuestNote');
+
+  lockNote.style.display = (inRoom && !isHost) ? 'block' : 'none';
+  guestNote.style.display = !inRoom ? 'block' : 'none';
+
+  // Enable/disable controls
+  const controls = document.querySelectorAll('#tabSettings .toggle input, #tabSettings .sc-btn');
+  controls.forEach(c => c.disabled = !hostControl);
+
+  // Sync values
+  document.getElementById('sc7').classList.toggle('active', roomRules.startCards === 7);
+  document.getElementById('sc9').classList.toggle('active', roomRules.startCards === 9);
+  document.getElementById('rStackDraw2').checked = roomRules.stackDraw2;
+  document.getElementById('rStackDraw4').checked = roomRules.stackDraw4;
+  document.getElementById('rStackMix').checked = roomRules.stackMix;
+  document.getElementById('rRule7').checked = roomRules.rule7;
+  document.getElementById('rRule0').checked = roomRules.rule0;
+  document.getElementById('rRule9').checked = roomRules.rule9;
+  document.getElementById('rDrawUntilPlay').checked = roomRules.drawUntilPlay;
+  document.getElementById('rMultiPlay').checked = roomRules.multiPlay;
+  // wild4NoRestriction true = sem restrição = toggle DESMARCADO
+  document.getElementById('rWild4Restrict').checked = !roomRules.wild4NoRestriction;
+  document.getElementById('rGlowCards').checked  = !!roomRules.glowCards;
+  document.getElementById('rTurnTimer').checked   = !!roomRules.turnTimer;
+}
+
+function setStartCards(n) {
+  if (!isHost || !currentRoom) return;
+  roomRules.startCards = n;
+  document.getElementById('sc7').classList.toggle('active', n===7);
+  document.getElementById('sc9').classList.toggle('active', n===9);
+  socket.emit('room:update_rules', { rules: roomRules });
+}
+
+function updateRule(key, val) {
+  if (!isHost || !currentRoom) return;
+  roomRules[key] = val;
+  socket.emit('room:update_rules', { rules: roomRules });
+}
+
+// ── Auth ──────────────────────────────────────────────────
+async function initUser() {
+  try {
+    let res = await fetch('/auth/user'), d = await res.json();
+    if (d.authenticated) { currentUser = d.user; }
+    else {
+      res = await fetch('/auth/guest/session'); d = await res.json();
+      if (d.authenticated) currentUser = d.user;
+    }
+  } catch(e) {}
+
+  if (!currentUser) { window.location.href = '/'; return; }
+
+  const av = document.getElementById('hAv');
+  if (currentUser.avatar) {
+    av.innerHTML = `<img src="${currentUser.avatar}" alt="">`;
+    av.style.background = 'none';
+  } else {
+    av.textContent = currentUser.name[0].toUpperCase();
+  }
+  document.getElementById('hName').textContent = currentUser.name;
+}
+
+function logout() {
+  sessionStorage.clear();
+  if (currentUser?.provider === 'guest') {
+    fetch('/auth/logout').then(()=>window.location.href='/');
+  } else {
+    window.location.href = '/auth/logout';
+  }
+}
+
+// ── Socket ─────────────────────────────────────────────────
+socket.on('room:list', rooms => {
+  const list = document.getElementById('roomList');
+  if (!rooms.length) { list.innerHTML = '<div class="no-rooms">Nenhuma sala aberta.<br>Crie uma para começar!</div>'; return; }
+  list.innerHTML = rooms.map(r => `
+    <div class="room-card" onclick="joinRoom('${r.id}')">
+      <div class="room-info"><h3>Sala de ${esc(r.hostName)}</h3><p>Código: ${r.id}</p></div>
+      <div class="room-players">👥 ${r.playerCount}/${r.maxPlayers}</div>
+    </div>`).join('');
+});
+
+socket.on('room:joined', d => {
+  currentRoom = d.roomId; isHost = d.isHost; myPlayer = d.you;
+  if (d.rules) roomRules = Object.assign({ wild4NoRestriction:true }, d.rules);
+  document.getElementById('initialState').style.display  = 'none';
+  document.getElementById('inRoomState').style.display   = 'block';
+  document.getElementById('roomCodeValue').textContent   = d.roomId;
+  updatePlayers(d.players);
+  updateSettingsUI();
+  updateBgButtons();
+});
+socket.on('room:player_joined', d => { updatePlayers(d.players); showToast(d.newPlayer.name+' entrou!'); });
+socket.on('room:player_left',   d => {
+  updatePlayers(d.players);
+  showToast(d.playerName+' saiu');
+  if (d.newHost?.id === socket.id) { isHost = true; updateStartBtn(d.players.length); showToast('Você é o novo host!'); updateSettingsUI(); }
+});
+socket.on('room:left', () => {
+  currentRoom = null; isHost = false; myPlayer = null;
+  roomRules = { startCards:7, stackDraw2:false, stackDraw4:false, stackMix:false, rule7:false, rule0:false, rule9:false, drawUntilPlay:false, multiPlay:false, wild4NoRestriction:true, glowCards:true, turnTimer:true };
+  bgRoomChoice = undefined; bgVotes = {}; bgSelected = null;
+  document.getElementById('inRoomState').style.display  = 'none';
+  document.getElementById('initialState').style.display = 'block';
+  updateSettingsUI();
+  updateBgButtons();
+  renderBgList();
+});
+socket.on('room:rules_updated', d => {
+  roomRules = Object.assign({ wild4NoRestriction:true }, d.rules);
+  updateSettingsUI();
+  if (!isHost) showToast('Host atualizou as regras!');
+});
+socket.on('game:started', state => {
+  sessionStorage.setItem('gameState',     JSON.stringify(state));
+  sessionStorage.setItem('roomId',        currentRoom);
+  sessionStorage.setItem('myPlayer',      JSON.stringify(myPlayer));
+  sessionStorage.setItem('playerId',      currentUser?.id || '');
+  sessionStorage.setItem('playerName',    currentUser?.name || myPlayer?.name || '');
+  sessionStorage.setItem('playerAvatar',  currentUser?.avatar || myPlayer?.avatar || '');
+  // Background: host escolheu → usa (null = padrão explícito, string = arquivo escolhido)
+  // senão pega o mais votado, senão nenhum (fundo padrão do jogo)
+  let chosenBg = bgRoomChoice; // undefined = host não escolheu nada
+  if (chosenBg === undefined) {
+    // Mais votado
+    let topUrl = null, topCount = 0;
+    Object.entries(bgVotes).forEach(([url, s]) => {
+      const cnt = typeof s === 'object' ? (s.size||0) : (s||0);
+      if (cnt > topCount) { topCount = cnt; topUrl = url; }
+    });
+    if (topCount > 0 && topUrl && topUrl !== 'default') {
+      chosenBg = topUrl;
+    }
+    // Sem votos e host não escolheu → nenhum bg (padrão do jogo)
+  }
+  // null explícito = host escolheu "padrão" → remove qualquer bg
+  if (chosenBg === null || chosenBg === undefined) sessionStorage.removeItem('selectedBackground');
+  else sessionStorage.setItem('selectedBackground', chosenBg);
+  window.location.href = '/game';
+});
+socket.on('error', m => showToast('⚠️ '+m));
+
+// ── Ações ──────────────────────────────────────────────────
+function createRoom() { socket.emit('room:create', { playerName: currentUser?.name, playerAvatar: currentUser?.avatar, guestId: currentUser?.id }); }
+function joinRoom(id) { socket.emit('room:join',   { roomId: id, playerName: currentUser?.name, playerAvatar: currentUser?.avatar, guestId: currentUser?.id }); }
+function joinByCode()  { const c = document.getElementById('joinCode').value.trim().toUpperCase(); if (c.length < 4) return showToast('Digite o código'); joinRoom(c); }
+function startGame()   { socket.emit('game:start', { rules: roomRules }); }
+function leaveRoom()   { socket.emit('room:leave'); }
+
+function updatePlayers(players) {
+  const c = document.getElementById('playersInRoom');
+  c.innerHTML = players.map(p => `
+    <div class="player-row">
+      <div class="pl-av">${p.avatar ? `<img src="${p.avatar}" alt="">` : p.name[0].toUpperCase()}</div>
+      <div class="pl-name">${esc(p.name)}</div>
+      ${p.isHost ? '<div class="host-badge">👑 Host</div>' : ''}
+    </div>`).join('') + (players.length < 10 ? '<div class="waiting-slot">Aguardando jogador...</div>' : '');
+  document.getElementById('playerCountText').textContent = `${players.length} jogador${players.length!==1?'es':''}`;
+  updateStartBtn(players.length);
+}
+
+function updateStartBtn(n) {
+  const b = document.getElementById('startBtn');
+  b.disabled  = !isHost || n < 2;
+  b.textContent = isHost ? (n<2?'Aguardando jogadores...':'Iniciar Partida') : 'Aguardando o host...';
+}
+
+// ── Histórico ──────────────────────────────────────────────
+async function openHistory() {
+  document.getElementById('historyModal').style.display = 'flex';
+  try {
+    const url  = currentUser ? `/api/history/${currentUser.id}` : '/api/history';
+    const data = await (await fetch(url)).json();
+    const list = document.getElementById('historyList');
+    if (!data.length) { list.innerHTML = '<div class="no-history">Nenhuma partida registrada ainda.</div>'; return; }
+    list.innerHTML = data.map(m => {
+      const dt = m.endedAt ? new Date(m.endedAt).toLocaleString('pt-BR') : 'Em andamento';
+      const ps = m.players.map(p=>p.name).join(', ');
+      return `<div class="match-row">
+        <div class="match-row-top">
+          <div class="match-winner">🏆 ${esc(m.winnerName||'?')}</div>
+          <div class="match-date">${dt}</div>
+        </div>
+        <div class="match-players">${esc(ps)} • ${m.rounds||0} rodadas</div>
+      </div>`;
+    }).join('');
+  } catch(e) { document.getElementById('historyList').innerHTML = '<div class="no-history">Erro ao carregar.</div>'; }
+}
+function closeHistory() { document.getElementById('historyModal').style.display='none'; }
+
+function showToast(msg) {
+  document.querySelector('.toast')?.remove();
+  const t = document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(),3000);
+}
+function esc(s) { if(!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+document.getElementById('joinCode').addEventListener('keypress', e => { if(e.key==='Enter') joinByCode(); });
+
+// ── Background Panel ──────────────────────────────────────
+const BG_IMG_EXT = ['jpg','jpeg','png','webp','gif'];
+const BG_VID_EXT = ['mp4','webm','ogg'];
+const BG_ALL_EXT = [...BG_IMG_EXT, ...BG_VID_EXT];
+
+let bgFiles = [];          // [{url, type:'img'|'vid'}]
+let bgSelected = null;     // null = padrão selecionado; undefined = nada tocado ainda
+let bgVotes = {};          // { url: count }
+let bgRoomChoice = undefined; // url definida pelo host (undefined=não definida ainda)
+
+// Scan: tenta /background/api/list primeiro (se existir), depois força-bruta
+async function scanBackgrounds() {
+  // Tenta endpoint de listagem do servidor (opcional)
+  try {
+    const r = await fetch('/api/backgrounds');
+    if (r.ok) {
+      const list = await r.json();
+      bgFiles = list.map(f => ({ url: f.url, type: BG_VID_EXT.some(e => f.url.endsWith('.'+e)) ? 'vid' : 'img' }));
+      renderBgList();
+      return;
+    }
+  } catch(e) {}
+
+  // Força-bruta: testa URLs comuns + numeradas 1–50 + nomes genéricos
+  const names = ['bg','background','table','felt','game','scene','lobby','uno',
+    'dark','light','space','city','forest','beach','neon','retro','classic'];
+  const nums = Array.from({length:50},(_,i)=>String(i+1));
+  const candidates = [];
+  [...names, ...nums].forEach(n => BG_ALL_EXT.forEach(e => candidates.push(`/background/${n}.${e}`)));
+
+  const found = [];
+  await Promise.all(candidates.map(url => new Promise(res => {
+    const isVid = BG_VID_EXT.some(e => url.endsWith('.'+e));
+    if (isVid) {
+      // Vídeo: testa com fetch HEAD
+      fetch(url, {method:'HEAD'}).then(r => {
+        if (r.ok) found.push({url, type:'vid'});
+        res();
+      }).catch(() => res());
+    } else {
+      const img = new Image();
+      img.onload = () => { found.push({url, type:'img'}); res(); };
+      img.onerror = () => res();
+      img.src = url;
+    }
+  })));
+
+  // Deduplica
+  const seen = new Set();
+  bgFiles = found.filter(f => { if(seen.has(f.url)) return false; seen.add(f.url); return true; });
+  renderBgList();
+}
+
+function renderBgList() {
+  const list = document.getElementById('bgList');
+
+  // Padrão sempre primeiro
+  const defaultItem = buildBgItem(null, 'default');
+  const items = bgFiles.map(f => buildBgItem(f.url, f.type));
+
+  if (bgFiles.length === 0) {
+    list.innerHTML = defaultItem + `<div class="bg-no-files">Sem arquivos em /background/<br><small>Suporte: jpg png gif mp4 webm</small></div>`;
+  } else {
+    list.innerHTML = defaultItem + items.join('');
+  }
+  updateBgStatus();
+  updateBgButtons();
+}
+
+function buildBgItem(url, type) {
+  const key = url || 'default';
+  // null = padrão selecionado; undefined = nada tocado; string = arquivo selecionado
+  const isMySel = bgSelected === url; // null===null or string===string
+  const isActive = bgRoomChoice === url;
+  const votes = bgVotes[key] || 0;
+
+  const activeBadge = isActive
+    ? `<div class="bg-active-badge">✓ ATIVO</div>` : '';
+  const voteBadge = votes > 0
+    ? `<div class="bg-vote-badge">${votes} 🗳️</div>` : '';
+
+  const selClass = isMySel ? ' my-sel' : '';
+  const activeClass = isActive ? ' room-active' : '';
+
+  if (!url) {
+    return `<div class="bg-item bg-item-default${selClass}${activeClass}" onclick="selectBg(null)">
+      <div class="bg-item-default-icon">🎴</div>
+      <div class="bg-item-default-lbl">PADRÃO</div>
+      ${activeBadge}${voteBadge}
+    </div>`;
+  }
+
+  if (type === 'vid') {
+    return `<div class="bg-item${selClass}${activeClass}" onclick="selectBg('${url}')" style="background:#111;">
+      <video src="${url}" muted loop autoplay playsinline preload="auto"
+        style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none"
+        onerror="this.style.display='none';this.parentElement.innerHTML+='<div style=\'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5);font-size:11px;\'>⚠ Erro ao carregar</div>'"></video>
+      ${activeBadge}${voteBadge}
+    </div>`;
+  }
+
+  return `<div class="bg-item${selClass}${activeClass}" onclick="selectBg('${url}')" style="background:#1a1a2e;">
+    <img src="${url}" alt=""
+      style="width:100%;height:100%;object-fit:cover;display:block;border-radius:7px;"
+      onerror="this.style.display='none';this.parentElement.insertAdjacentHTML('beforeend','<div style=\'position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:rgba(255,255,255,.45);font-size:11px;\'>🖼️<span>Erro ao carregar</span></div>')">
+    ${activeBadge}${voteBadge}
+  </div>`;
+}
+
+function selectBg(url) {
+  bgSelected = url;
+  renderBgList();
+}
+
+function updateBgStatus() {
+  const el = document.getElementById('bgStatus');
+  if (!el) return;
+  if (!currentRoom) { el.textContent = 'Entre em uma sala para votar'; return; }
+  if (bgRoomChoice !== undefined && bgRoomChoice !== null) {
+    el.textContent = '✅ Cenário definido pelo host';
+  } else {
+    let topUrl = null, topCount = 0;
+    Object.entries(bgVotes).forEach(([u, c]) => { if (c > topCount) { topCount = c; topUrl = u; } });
+    if (topCount > 0) {
+      el.textContent = `🗳️ Mais votado: ${topUrl === 'default' ? 'Padrão' : topUrl.split('/').pop()} (${topCount})`;
+    } else {
+      el.textContent = 'Sem votos — será aleatório';
+    }
+  }
+}
+
+function updateBgButtons() {
+  const applyBtn = document.getElementById('btnBgApply');
+  const voteBtn  = document.getElementById('btnBgVote');
+  if (!applyBtn || !voteBtn) return;
+  // bgSelected === undefined means nothing touched yet; null means "default" (valid)
+  const hasSelection = bgSelected !== undefined;
+  applyBtn.disabled = !isHost || !currentRoom || !hasSelection;
+  voteBtn.disabled  = !currentRoom || !hasSelection;
+  applyBtn.textContent = isHost && currentRoom ? '✅ Definir para a sala' : '✅ Definir (só host)';
+}
+
+function applyBackground() {
+  if (!isHost || !currentRoom) return showToast('Só o host pode definir');
+  if (bgSelected === undefined) return showToast('Selecione um cenário');
+  socket.emit('room:set_background', { url: bgSelected });
+}
+
+function voteBackground() {
+  if (!currentRoom) return showToast('Entre em uma sala para votar');
+  if (bgSelected === undefined) return showToast('Selecione um cenário');
+  socket.emit('room:vote_background', { url: bgSelected });
+  showToast('Voto registrado!');
+}
+
+// ── Socket events para background ──
+socket.on('room:background_set', d => {
+  bgRoomChoice = d.url;
+  if (!isHost) showToast('Host definiu o cenário!');
+  else showToast('Cenário definido!');
+  renderBgList();
+});
+
+socket.on('room:background_votes', d => {
+  bgVotes = {};
+  Object.entries(d.votes || {}).forEach(([url, count]) => { bgVotes[url] = count; });
+  renderBgList();
+});
+
+// Ao entrar na sala, sincroniza bg
+socket.on('room:joined', d => {
+  if (d.background !== undefined) bgRoomChoice = d.background;
+  if (d.backgroundVotes) {
+    bgVotes = {};
+    Object.entries(d.backgroundVotes).forEach(([url, count]) => { bgVotes[url] = count; });
+  }
+  updateBgButtons();
+  renderBgList();
+});
+
+scanBackgrounds();
+initUser();
+updateSettingsUI();
+</script>
+</body>
+</html>

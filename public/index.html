@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>UNO — The Classic Card Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--red:#E8001C;--yellow:#FFD700;--green:#1DB954;--blue:#0066FF;--orange:#FF7A00}
+body{font-family:'Nunito',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+
+.bg{position:fixed;inset:0;z-index:0;background:linear-gradient(135deg,#e8001c,#ff7a00,#ffd700,#1db954);background-size:400% 400%;animation:gradShift 8s ease infinite}
+@keyframes gradShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.bg::after{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");opacity:0.12;pointer-events:none}
+
+.floating-cards{position:fixed;inset:0;z-index:1;pointer-events:none}
+.float-card{position:absolute;width:52px;height:78px;border-radius:9px;border:2px solid rgba(255,255,255,0.25);backdrop-filter:blur(2px);animation:floatUp linear infinite}
+@keyframes floatUp{0%{transform:translateY(110vh) rotate(0deg);opacity:0}10%{opacity:.7}90%{opacity:.7}100%{transform:translateY(-20vh) rotate(360deg);opacity:0}}
+
+.center{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:22px;animation:fadeUp .8s ease both;padding:20px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(36px)}to{opacity:1;transform:translateY(0)}}
+
+.logo{font-family:'Bebas Neue';font-size:clamp(90px,18vw,160px);color:white;letter-spacing:-3px;line-height:1;text-shadow:6px 6px 0 rgba(0,0,0,0.25),0 0 60px rgba(255,255,255,0.3);animation:logoPulse 3s ease-in-out infinite}
+@keyframes logoPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+.tagline{font-size:16px;color:rgba(255,255,255,0.9);font-weight:700;letter-spacing:3px;text-transform:uppercase;text-shadow:0 2px 8px rgba(0,0,0,0.2)}
+
+/* Card de login */
+.login-card{background:rgba(255,255,255,0.15);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.3);border-radius:24px;padding:28px 32px;display:flex;flex-direction:column;gap:12px;min-width:300px;max-width:360px;width:100%;animation:fadeUp .8s .15s ease both}
+
+.btn-auth{display:flex;align-items:center;gap:12px;padding:14px 20px;border:none;border-radius:14px;font-family:'Nunito';font-size:16px;font-weight:900;cursor:pointer;transition:transform .2s,box-shadow .2s;text-decoration:none;width:100%}
+.btn-auth:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+.btn-auth:active{transform:translateY(0)}
+.btn-auth svg,.btn-auth img{width:24px;height:24px;flex-shrink:0}
+
+.btn-google{background:white;color:#333}
+.btn-steam{background:#1b2838;color:white}
+.btn-guest{background:rgba(255,255,255,0.2);color:white;border:2px solid rgba(255,255,255,0.4)}
+
+.divider{display:flex;align-items:center;gap:10px;color:rgba(255,255,255,0.6);font-size:12px;font-weight:700;letter-spacing:2px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.3)}
+
+/* Guest form */
+.guest-form{display:none;flex-direction:column;gap:10px;animation:fadeUp .3s ease both}
+.guest-input{padding:12px 16px;border:2px solid rgba(255,255,255,0.4);border-radius:12px;background:rgba(255,255,255,0.15);color:white;font-family:'Nunito';font-size:15px;font-weight:700;outline:none;transition:border-color .2s;width:100%}
+.guest-input::placeholder{color:rgba(255,255,255,0.5)}
+.guest-input:focus{border-color:rgba(255,255,255,0.8)}
+.btn-play{padding:13px 20px;background:linear-gradient(135deg,var(--red),var(--orange));color:white;border:none;border-radius:12px;font-family:'Nunito';font-size:16px;font-weight:900;cursor:pointer;transition:transform .2s,box-shadow .2s;width:100%}
+.btn-play:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,0.3)}
+.btn-back{background:none;border:none;color:rgba(255,255,255,0.7);font-family:'Nunito';font-size:13px;font-weight:700;cursor:pointer;text-align:center;padding:4px}
+.btn-back:hover{color:white}
+
+/* Já logado */
+.logged-card{background:rgba(255,255,255,0.15);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.3);border-radius:24px;padding:24px 32px;display:flex;flex-direction:column;align-items:center;gap:16px;min-width:280px;animation:fadeUp .8s .15s ease both}
+.user-avatar-big{width:72px;height:72px;border-radius:50%;border:3px solid white;overflow:hidden;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:28px;color:white;background:linear-gradient(135deg,#ff7a00,#ffd700)}
+.user-avatar-big img{width:100%;height:100%;object-fit:cover}
+.user-name{color:white;font-size:20px;font-weight:900;text-shadow:0 2px 8px rgba(0,0,0,0.2)}
+.user-provider{color:rgba(255,255,255,0.7);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.btn-enter{padding:14px 40px;background:white;color:var(--red);border:none;border-radius:30px;font-family:'Nunito';font-size:18px;font-weight:900;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 20px rgba(0,0,0,0.2)}
+.btn-enter:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(0,0,0,0.3)}
+.btn-switch{background:none;border:1px solid rgba(255,255,255,0.4);color:rgba(255,255,255,0.8);border-radius:20px;padding:7px 18px;font-family:'Nunito';font-size:13px;font-weight:700;cursor:pointer;transition:background .2s}
+.btn-switch:hover{background:rgba(255,255,255,0.15)}
+
+.error-msg{color:#ffcccc;font-size:13px;font-weight:700;text-align:center;display:none}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="floating-cards" id="floatingCards"></div>
+
+<div class="center">
+  <div class="logo">UNO</div>
+  <div class="tagline">The Classic Card Game</div>
+
+  <!-- Estado: não logado -->
+  <div class="login-card" id="loginCard">
+    <a href="/auth/google" class="btn-auth btn-google">
+      <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Entrar com Google
+    </a>
+
+    <a href="/auth/steam" class="btn-auth btn-steam">
+      <svg viewBox="0 0 24 24" fill="white"><path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.029 4.524 4.524s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.605 0 11.979 0zM7.54 18.21l-1.473-.61c.262.543.714.999 1.314 1.25 1.297.539 2.793-.076 3.332-1.375.263-.63.264-1.319.005-1.949s-.75-1.121-1.377-1.383c-.624-.26-1.29-.249-1.878-.03l1.523.63c.956.4 1.409 1.5 1.009 2.455-.397.957-1.497 1.41-2.454 1.012H7.54zm11.415-9.303c0-1.662-1.353-3.015-3.015-3.015-1.665 0-3.015 1.353-3.015 3.015 0 1.665 1.35 3.015 3.015 3.015 1.663 0 3.015-1.35 3.015-3.015zm-5.273-.005c0-1.252 1.013-2.266 2.265-2.266 1.249 0 2.266 1.014 2.266 2.266 0 1.251-1.017 2.265-2.266 2.265-1.252 0-2.265-1.014-2.265-2.265z"/></svg>
+      Entrar com Steam
+    </a>
+
+    <div class="divider">ou</div>
+
+    <!-- Form convidado (oculto inicialmente) -->
+    <div class="guest-form" id="guestForm">
+      <input class="guest-input" type="text" id="guestNameInput" placeholder="Seu apelido..." maxlength="20" autocomplete="off">
+      <div class="error-msg" id="guestError">Digite um nome válido!</div>
+      <button class="btn-play" onclick="enterAsGuest()">🎴 Jogar como Convidado</button>
+      <button class="btn-back" onclick="hideGuestForm()">← Voltar</button>
+    </div>
+
+    <!-- Botão convidado -->
+    <button class="btn-auth btn-guest" id="guestBtn" onclick="showGuestForm()">
+      <span style="font-size:20px">👤</span>
+      Entrar como Convidado
+    </button>
+  </div>
+
+  <!-- Estado: logado -->
+  <div class="logged-card" id="loggedCard" style="display:none">
+    <div class="user-avatar-big" id="loggedAvatar"></div>
+    <div>
+      <div class="user-name" id="loggedName"></div>
+      <div class="user-provider" id="loggedProvider"></div>
+    </div>
+    <button class="btn-enter" onclick="window.location.href='/lobby'">🎴 Jogar Agora</button>
+    <button class="btn-switch" onclick="switchAccount()">Trocar de conta</button>
+  </div>
+</div>
+
+<script>
+// Cartas flutuando
+const fc = document.getElementById('floatingCards');
+const cols = ['#e8001c33','#0066ff33','#1db95433','#ffd70033','#ff7a0033'];
+for (let i = 0; i < 12; i++) {
+  const c = document.createElement('div');
+  c.className = 'float-card';
+  c.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;background:${cols[i%cols.length]};animation-duration:${9+Math.random()*12}s;animation-delay:${Math.random()*10}s`;
+  fc.appendChild(c);
+}
+
+// Verificar auth
+async function checkAuth() {
+  try {
+    // Tentar auth real
+    const res  = await fetch('/auth/user');
+    const data = await res.json();
+    if (data.authenticated) { showLoggedIn(data.user); return; }
+
+    // Tentar sessão de convidado
+    const gr   = await fetch('/auth/guest/session');
+    const gd   = await gr.json();
+    if (gd.authenticated) { showLoggedIn(gd.user); return; }
+  } catch(e) {}
+  // Não logado — mostra login card
+  document.getElementById('loginCard').style.display = 'flex';
+}
+
+function showLoggedIn(user) {
+  document.getElementById('loginCard').style.display  = 'none';
+  document.getElementById('loggedCard').style.display = 'flex';
+  const av = document.getElementById('loggedAvatar');
+  av.innerHTML = user.avatar ? `<img src="${user.avatar}" alt="">` : user.name[0].toUpperCase();
+  document.getElementById('loggedName').textContent = user.name;
+  const provMap = { google:'Google', steam:'Steam', guest:'Convidado' };
+  document.getElementById('loggedProvider').textContent = provMap[user.provider] || user.provider;
+}
+
+function switchAccount() {
+  fetch('/auth/logout').then(()=>{ sessionStorage.clear(); window.location.reload(); });
+}
+
+// Guest form
+function showGuestForm() {
+  document.getElementById('guestBtn').style.display  = 'none';
+  document.getElementById('guestForm').style.display = 'flex';
+  setTimeout(()=>document.getElementById('guestNameInput').focus(), 50);
+}
+function hideGuestForm() {
+  document.getElementById('guestForm').style.display = 'none';
+  document.getElementById('guestBtn').style.display  = 'flex';
+}
+
+async function enterAsGuest() {
+  const name = document.getElementById('guestNameInput').value.trim();
+  const err  = document.getElementById('guestError');
+  if (!name) { err.style.display='block'; return; }
+  err.style.display = 'none';
+  try {
+    const res  = await fetch('/auth/guest', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name }) });
+    const data = await res.json();
+    if (data.success) { showLoggedIn(data.user); setTimeout(()=>window.location.href='/lobby', 600); }
+  } catch(e) { err.textContent='Erro ao criar sessão'; err.style.display='block'; }
+}
+
+document.getElementById('guestNameInput')?.addEventListener('keypress', e => { if(e.key==='Enter') enterAsGuest(); });
+
+checkAuth();
+</script>
+</body>
+</html>
