@@ -11,11 +11,34 @@ Recomendações:
 Utilize nomes sem espaços.
 Evite caracteres especiais.
 Mantenha a nomenclatura compatível com o Card Manager do projeto.
-Caso utilize múltiplos packs de cartas, organize-os em subpastas.
+Você pode criar seu próprio pacote seguindo a convenção de nomes descrita abaixo.
 
-Exemplo:
-
-cards/
-├── classic/
-├── retro/
-└── custom/
+Cartas Azuis
+Blue_0.png
+Blue_1.png
+...
+Blue_9.png
+Blue_Draw.png
+Cartas Verdes
+Green_0.png
+Green_1.png
+...
+Green_9.png
+Green_Draw.png
+Cartas Vermelhas
+Red_0.png
+Red_1.png
+...
+Red_9.png
+Red_Draw.png
+Cartas Amarelas
+Yellow_0.png
+Yellow_1.png
+...
+Yellow_9.png
+Yellow_Draw.png
+Coringas
+Wild.png
+Wild_Draw.png
+Baralho
+Deck.png
