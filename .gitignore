@@ -2,9 +2,14 @@ node_modules/
 
 .env
 
-public/cards/
+config.js
+
+data/db.json
 
 *.log
 
-database/
-db/
+public/cards/*
+!public/cards/.gitkeep
+
+public/background/*
+!public/background/.gitkeep

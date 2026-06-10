@@ -323,6 +323,13 @@ body{font-family:'Nunito',sans-serif;min-height:100vh;background:linear-gradient
             </div>
             <label class="toggle"><input type="checkbox" id="rStackMix" onchange="updateRule('stackMix', this.checked)"><span class="toggle-slider"></span></label>
           </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Empilhamento Livre <span class="setting-badge">+2↔+4 novo</span></div>
+              <div class="setting-desc">+2 e +4 acumulam entre si livremente em qualquer ordem.</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="rStackFree" onchange="updateRule('stackFree', this.checked)"><span class="toggle-slider"></span></label>
+          </div>
         </div>
       </div>
 
@@ -360,10 +367,24 @@ body{font-family:'Nunito',sans-serif;min-height:100vh;background:linear-gradient
         <div class="settings-grid">
           <div class="setting-row">
             <div class="setting-info">
-              <div class="setting-name">Comprar até jogar</div>
-              <div class="setting-desc">Continua comprando do baralho até tirar uma carta válida.</div>
+              <div class="setting-name">Comprar Infinitamente</div>
+              <div class="setting-desc">Compra quantas cartas quiser. Turno termina ao jogar ou o timer acabar.</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="rDrawInfinite" onchange="updateRule('drawInfinite', this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Comprar Até Jogar</div>
+              <div class="setting-desc">Compra do baralho até encontrar uma carta jogável — servidor joga automaticamente.</div>
             </div>
             <label class="toggle"><input type="checkbox" id="rDrawUntilPlay" onchange="updateRule('drawUntilPlay', this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Deck Infinito <span class="setting-badge">∞</span></div>
+              <div class="setting-desc">Quando o deck acabar, novas cartas são geradas. Sem reciclagem do descarte.</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="rDeckInfinite" onchange="updateRule('deckInfinite', this.checked)"><span class="toggle-slider"></span></label>
           </div>
           <div class="setting-row">
             <div class="setting-info">
@@ -374,18 +395,26 @@ body{font-family:'Nunito',sans-serif;min-height:100vh;background:linear-gradient
           </div>
           <div class="setting-row">
             <div class="setting-info">
+              <div class="setting-name">Jogar múltiplas especiais <span class="setting-badge">novo</span></div>
+              <div class="setting-desc">Jogue várias cartas especiais (+2, +4, Skip, Reverse, Wild) de uma vez.</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="rMultiPlaySpecial" onchange="updateRule('multiPlaySpecial', this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Intrometer (Jump-In) <span class="setting-badge">⚡</span></div>
+              <div class="setting-desc">Qualquer jogador pode jogar carta idêntica (mesma cor + valor) fora de turno.</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="rJumpIn" onchange="updateRule('jumpIn', this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
               <div class="setting-name">Restrição do +4 <span class="setting-badge">oficial</span></div>
               <div class="setting-desc">Ative para aplicar a regra oficial: +4 só pode ser jogado se não tiver carta da cor atual na mão.</div>
             </div>
             <label class="toggle"><input type="checkbox" id="rWild4Restrict" onchange="updateRule('wild4NoRestriction', !this.checked)"><span class="toggle-slider"></span></label>
           </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <div class="setting-name">Brilhar cartas jogáveis <span class="setting-badge">✨ visual</span></div>
-              <div class="setting-desc">Suas cartas que podem ser jogadas ficam com brilho dourado na sua vez.</div>
-            </div>
-            <label class="toggle"><input type="checkbox" id="rGlowCards" onchange="updateRule('glowCards', this.checked)"><span class="toggle-slider"></span></label>
-          </div>
+
           <div class="setting-row">
             <div class="setting-info">
               <div class="setting-name">Tempo limite por turno <span class="setting-badge">⏱ 30s</span></div>
@@ -428,7 +457,10 @@ const socket = io();
 let currentUser = null, currentRoom = null, isHost = false, myPlayer = null;
 let roomRules = {
   startCards: 7, stackDraw2: false, stackDraw4: false, stackMix: false,
-  rule7: false, rule0: false, rule9: false, drawUntilPlay: false, multiPlay: false,
+  stackFree: false,
+  rule7: false, rule0: false, rule9: false,
+  drawUntilPlay: false, drawInfinite: false, deckInfinite: false,
+  jumpIn: false, multiPlay: false, multiPlaySpecial: false,
   wild4NoRestriction: true, glowCards: true, turnTimer: true
 };
 
@@ -468,8 +500,18 @@ function updateSettingsUI() {
   document.getElementById('rMultiPlay').checked = roomRules.multiPlay;
   // wild4NoRestriction true = sem restrição = toggle DESMARCADO
   document.getElementById('rWild4Restrict').checked = !roomRules.wild4NoRestriction;
-  document.getElementById('rGlowCards').checked  = !!roomRules.glowCards;
+  // glowCards sempre ativo
   document.getElementById('rTurnTimer').checked   = !!roomRules.turnTimer;
+  const rdi = document.getElementById('rDrawInfinite');
+  if (rdi) rdi.checked = !!roomRules.drawInfinite;
+  const rdinf = document.getElementById('rDeckInfinite');
+  if (rdinf) rdinf.checked = !!roomRules.deckInfinite;
+  const rmps = document.getElementById('rMultiPlaySpecial');
+  if (rmps) rmps.checked = !!roomRules.multiPlaySpecial;
+  const rsf = document.getElementById('rStackFree');
+  if (rsf) rsf.checked = !!roomRules.stackFree;
+  const rji = document.getElementById('rJumpIn');
+  if (rji) rji.checked = !!roomRules.jumpIn;
 }
 
 function setStartCards(n) {
@@ -547,7 +589,7 @@ socket.on('room:player_left',   d => {
 });
 socket.on('room:left', () => {
   currentRoom = null; isHost = false; myPlayer = null;
-  roomRules = { startCards:7, stackDraw2:false, stackDraw4:false, stackMix:false, rule7:false, rule0:false, rule9:false, drawUntilPlay:false, multiPlay:false, wild4NoRestriction:true, glowCards:true, turnTimer:true };
+  roomRules = { startCards:7, stackDraw2:false, stackDraw4:false, stackMix:false, stackFree:false, rule7:false, rule0:false, rule9:false, drawUntilPlay:false, drawInfinite:false, deckInfinite:false, jumpIn:false, multiPlay:false, multiPlaySpecial:false, wild4NoRestriction:true, glowCards:true, turnTimer:true };
   bgRoomChoice = undefined; bgVotes = {}; bgSelected = null;
   document.getElementById('inRoomState').style.display  = 'none';
   document.getElementById('initialState').style.display = 'block';
